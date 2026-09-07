@@ -295,8 +295,7 @@
 <header class="app">
   <div class="inner">
     <div class="brand">
-      <h1>B<span class="amp">&amp;</span>S's Study Rutin</h1>
-      <span class="tag">Bang · Song</span>
+      <h1>Study Plan</h1>
     </div>
     <button class="gear" id="btnSync" title="공유 · 연동 설정" aria-label="공유 연동 설정">⚙</button>
   </div>
@@ -323,7 +322,7 @@
         <h2><span class="k"></span>장소 &amp; 시간</h2>
         <ul>
           <li>스터디 일정은 매월 각자의 스케줄에 따라 정함</li>
-          <li>만나는 장소는 <b>카공족 신림점</b></li>
+          <li>만나는 장소는 <b>카공족 신림역1호점</b></li>
           <li><b>평일</b> 오후 8시~10시 <span class="rule-note">(Song 쉬는 날이면 오후 2시~10시)</span></li>
           <li><b>주말</b> Bang 데이일 경우 오후 4시~10시 / 오프일 경우 오후 2시~10시</li>
           <li>저녁 식사 시간은 오후 <b>6~7시</b></li>
@@ -344,7 +343,7 @@
           <li>정해진 시간은 무조건 지키기, 더 하고 싶으면 추가로 해도 됨</li>
           <li>시작 시 <b>그날 무엇을 할지 서로 공유</b></li>
           <li>시간 내 못 끝낸 건 <b>숙제로 해오기</b></li>
-          <li class="rule-note">이 외 숙제는 없지만, 서로 공부를 너무 안 한다 싶으면 줄 수도 있음</li>
+          <li>이 외 숙제는 없지만, 서로 공부를 너무 안 한다 싶으면 줄 수도 있음</li>
         </ul>
       </div>
     </div>
@@ -444,7 +443,7 @@
     </div>
     <div class="mrow">
       <label>장소</label>
-      <input type="text" id="evPlace" placeholder="카공족 신림점" />
+      <input type="text" id="evPlace" placeholder="카공족 신림역1호점" />
     </div>
     <div class="mrow">
       <label>진행 방식</label>
@@ -530,7 +529,7 @@ const firebaseConfig = {
 
 const ROOM_ID = 'bns-study-rutin';   // 두 사람이 공유하는 방(문서) 식별자
 const LS_KEY  = 'bns_study_rutin_v1';
-const DEFAULT_PLACE = '카공족 신림점';
+const DEFAULT_PLACE = '카공족 신림역1호점';
 
 /* ---------------------------------------------------------------------------
    [2] 유틸
