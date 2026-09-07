@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>B&amp;S's Study Rutin</title>
+
+<!-- Pretendard 웹폰트 (오프라인이면 시스템 폰트로 자연 폴백됨) -->
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+
+<style>
+  /* ================= 디자인 토큰 =================
+     - 종이 느낌의 차분한 배경 + 뮤트 틸 프라이머리
+     - Bang(파랑) / Song(테라코타)로 사람 구분(기능적 색상)
+     - 기본 글자 작게: 13px 기준
+  */
+  :root{
+    --bg:#edf0f4;
+    --card:#ffffff;
+    --ink:#2b2d33;
+    --sub:#9a9aa1;
+    --line:#ececeb;
+    --line-strong:#e0e0dd;
+    --primary:#42707d;      /* 뮤트 틸 */
+    --primary-ink:#2f5761;
+    --primary-soft:#e7eff1;
+    --navy:#223066;         /* Momentum 탭 활성 색 */
+    --bang:#4f7cac;         /* Bang */
+    --bang-soft:#e9f0f7;
+    --song:#b16a43;         /* Song */
+    --song-soft:#f7efe8;
+    --offline:#5b8266;      /* 오프라인(대면) */
+    --online:#7e8794;       /* 화상 */
+    --danger:#bf554e;
+    --shadow:0 1px 2px rgba(30,30,35,.05), 0 6px 18px rgba(30,30,35,.05);
+    --radius:14px;
+    --radius-sm:9px;
+    --fs:13px;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:'Pretendard','Pretendard Variable',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+    font-size:var(--fs);
+    color:var(--ink);
+    background:var(--bg);
+    line-height:1.55;
+    -webkit-text-size-adjust:100%;
+  }
+  button{ font-family:inherit; cursor:pointer; }
+  input,textarea,select{ font-family:inherit; font-size:13px; color:var(--ink); }
+
+  /* ================= 레이아웃 ================= */
+  .wrap{ max-width:900px; margin:0 auto; padding:0 12px 88px; }
+
+  header.app{
+    position:sticky; top:0; z-index:40;
+    background:var(--bg);
+    padding:16px 12px 8px;
+  }
+  header.app .inner{ max-width:900px; margin:0 auto; display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .brand{ display:flex; align-items:baseline; gap:8px; }
+  .brand h1{
+    margin:0; font-size:19px; font-weight:800; letter-spacing:-.3px;
+  }
+  .brand h1 .amp{ color:var(--primary); font-weight:800; }
+  .brand .tag{ font-size:11px; color:var(--sub); font-weight:600; }
+  .gear{
+    border:1px solid var(--line-strong); background:var(--card);
+    width:32px; height:32px; border-radius:9px; display:grid; place-items:center;
+    color:var(--sub); font-size:15px;
+  }
+  .gear:active{ background:#f6f6f4; }
+
+  /* 탭 (Momentum 언더라인 스타일) */
+  .tabs{ display:flex; gap:4px; flex-wrap:wrap; margin-top:12px; border-bottom:1px solid var(--line); }
+  .tab{
+    border:none; background:transparent; cursor:pointer;
+    padding:9px 14px; font-weight:600; color:var(--sub);
+    white-space:nowrap; font-size:13px;
+    border-bottom:2px solid transparent; margin-bottom:-1px;
+  }
+  .tab:hover{ color:var(--ink); }
+  .tab.active{ color:var(--navy); border-bottom-color:var(--navy); }
+
+  /* 카드 공통 */
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .card + .card{ margin-top:12px; }
+
+  section.view{ display:none; }
+  section.view.active{ display:block; }
+
+  /* ================= 규칙 탭 ================= */
+  .rule-group{ padding:14px 16px; }
+  .rule-group + .rule-group{ border-top:1px solid var(--line); }
+  .rule-group h2{
+    margin:0 0 8px; font-size:13px; font-weight:800; color:var(--primary-ink);
+    display:flex; align-items:center; gap:7px;
+  }
+  .rule-group h2 .k{
+    display:inline-block; width:6px; height:6px; border-radius:2px; background:var(--primary);
+  }
+  .who{ display:flex; gap:8px; flex-wrap:wrap; margin:6px 0; }
+  .who .chip{
+    font-size:12px; padding:6px 10px; border-radius:8px; font-weight:700;
+  }
+  .who .chip.bang{ background:var(--bang-soft); color:var(--bang); }
+  .who .chip.song{ background:var(--song-soft); color:var(--song); }
+  .rule-group ul{ margin:6px 0 0; padding-left:18px; }
+  .rule-group li{ margin:4px 0; color:#414349; }
+  .rule-group li b{ color:var(--ink); }
+  .rule-note{ font-size:12px; color:var(--sub); margin-top:6px; }
+  .kv{ display:flex; gap:8px; font-size:12.5px; margin:3px 0; }
+  .kv .kk{ min-width:64px; color:var(--sub); font-weight:700; }
+
+  /* ================= 일정 탭 ================= */
+  .cal-toolbar{ padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .month-nav{ display:flex; align-items:center; gap:6px; }
+  .month-nav button{
+    width:30px; height:30px; border-radius:8px; border:1px solid var(--line-strong);
+    background:var(--card); color:var(--ink); font-size:15px;
+  }
+  .month-nav .mtitle{ font-size:15px; font-weight:800; min-width:104px; text-align:center; }
+  .btn{
+    border:1px solid var(--line-strong); background:var(--card); color:var(--ink);
+    padding:7px 11px; border-radius:9px; font-weight:700; font-size:12.5px;
+  }
+  .btn.primary{ background:var(--primary); border-color:var(--primary); color:#fff; }
+  .btn.ghost{ background:transparent; }
+  .btn.tiny{ padding:5px 9px; font-size:12px; }
+  .btn.danger{ color:var(--danger); border-color:#eecfcc; }
+  .btn:active{ transform:translateY(1px); }
+
+  /* 달력 그리드 */
+  .cal{ padding:4px 8px 12px; }
+  .dow{ display:grid; grid-template-columns:repeat(7,1fr); }
+  .dow span{ text-align:center; font-size:11px; color:var(--sub); font-weight:700; padding:6px 0; }
+  .dow span.sun{ color:#c06a63; }
+  .dow span.sat{ color:#5f7fa8; }
+  .grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cell{
+    min-height:60px; border:1px solid var(--line); border-radius:10px; padding:5px 5px 4px;
+    background:#fcfcfb; display:flex; flex-direction:column; gap:3px; overflow:hidden;
+  }
+  .cell.pad{ background:transparent; border-color:transparent; }
+  .cell .dnum{ font-size:11.5px; font-weight:700; color:#6b6d73; }
+  .cell.today{ border-color:var(--primary); box-shadow:0 0 0 1px var(--primary) inset; }
+  .cell.today .dnum{ color:var(--primary-ink); }
+  .cell .dnum.sun{ color:#c06a63; }
+  .cell .dnum.sat{ color:#5f7fa8; }
+  .cell .mk{ display:flex; flex-direction:column; gap:2px; }
+  .ev-chip{
+    font-size:10.5px; font-weight:700; line-height:1.4; border-radius:5px; padding:1px 5px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .ev-chip.offline{ background:#e8f0ea; color:var(--offline); }
+  .ev-chip.online{ background:#edeff2; color:var(--online); }
+  .rec-dot{ margin-top:1px; font-size:10px; color:var(--song); font-weight:800; }
+  .cell:active{ background:#f4f6f5; }
+
+  /* 기간 검색(필터) */
+  .filter{ padding:12px 14px; }
+  .filter h3{ margin:0 0 8px; font-size:12.5px; font-weight:800; color:var(--primary-ink); }
+  .filter .row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .filter input[type=date]{
+    border:1px solid var(--line-strong); border-radius:8px; padding:7px 9px; background:#fff;
+  }
+  .filter .sep{ color:var(--sub); }
+  .filter-err{ color:var(--danger); font-size:12px; margin-top:6px; display:none; }
+  .filter-err.show{ display:block; }
+
+  .results{ margin-top:10px; display:none; }
+  .results.show{ display:block; }
+  .results .rhead{ font-size:12px; color:var(--sub); margin-bottom:6px; }
+  .ritem{
+    border:1px solid var(--line); border-radius:10px; padding:9px 11px; margin-top:7px;
+    background:#fff; display:flex; gap:10px; align-items:flex-start;
+  }
+  .ritem .rdate{ font-weight:800; font-size:12.5px; min-width:70px; }
+  .ritem .rbody{ flex:1; min-width:0; }
+  .ritem .rline{ font-size:12px; color:#4a4c52; }
+  .badge{ display:inline-block; font-size:10px; font-weight:800; padding:1px 6px; border-radius:6px; vertical-align:middle; margin-left:4px; }
+  .badge.offline{ background:#e8f0ea; color:var(--offline); }
+  .badge.online{ background:#edeff2; color:var(--online); }
+  .rec-mini{ font-size:11.5px; margin-top:4px; }
+  .rec-mini .nm{ font-weight:800; }
+  .rec-mini .nm.bang{ color:var(--bang); }
+  .rec-mini .nm.song{ color:var(--song); }
+
+  .empty{ text-align:center; color:var(--sub); font-size:12.5px; padding:18px 8px; }
+
+  /* ================= 모달 ================= */
+  .overlay{
+    position:fixed; inset:0; z-index:60; background:rgba(24,25,28,.42);
+    display:none; align-items:flex-end; justify-content:center; padding:0;
+  }
+  .overlay.show{ display:flex; }
+  .sheet{
+    width:100%; max-width:560px; background:var(--card);
+    border-radius:18px 18px 0 0; box-shadow:0 -8px 30px rgba(0,0,0,.18);
+    max-height:88vh; overflow:auto; padding:16px 16px 22px;
+    animation:slideup .18s ease;
+  }
+  @keyframes slideup{ from{ transform:translateY(18px); opacity:.6; } to{ transform:none; opacity:1; } }
+  .sheet h3.mtitle{ margin:2px 0 12px; font-size:16px; font-weight:800; }
+  .sheet .close-x{
+    float:right; border:none; background:transparent; font-size:20px; color:var(--sub); line-height:1;
+  }
+  .mrow{ margin:10px 0; }
+  .mrow label{ display:block; font-size:11.5px; font-weight:700; color:var(--sub); margin-bottom:4px; }
+  .mrow input[type=text], .mrow input[type=time], .mrow input[type=date], .mrow textarea{
+    width:100%; border:1px solid var(--line-strong); border-radius:9px; padding:9px 10px; background:#fff;
+  }
+  .mrow textarea{ resize:vertical; min-height:60px; line-height:1.5; }
+  .mrow.two{ display:flex; gap:10px; }
+  .mrow.two > div{ flex:1; }
+  .modechoice{ display:flex; gap:8px; }
+  .modechoice button{
+    flex:1; border:1px solid var(--line-strong); background:#fff; border-radius:9px; padding:8px;
+    font-weight:700; font-size:12.5px; color:var(--sub);
+  }
+  .modechoice button.on[data-mode=offline]{ border-color:var(--offline); color:var(--offline); background:#eef4f0; }
+  .modechoice button.on[data-mode=online]{ border-color:var(--online); color:var(--online); background:#eef0f3; }
+  .form-err{ color:var(--danger); font-size:12px; margin:6px 0 0; display:none; }
+  .form-err.show{ display:block; }
+  .mactions{ display:flex; gap:8px; margin-top:16px; }
+  .mactions .btn{ flex:1; text-align:center; padding:11px; font-size:13.5px; }
+
+  /* 일자 상세 모달 내부 */
+  .day-events{ margin:6px 0 4px; }
+  .de-item{
+    border:1px solid var(--line); border-radius:11px; padding:10px 12px; margin-top:8px; background:#fcfcfb;
+  }
+  .de-item .de-top{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .de-item .de-time{ font-weight:800; font-size:13.5px; }
+  .de-item .de-place{ font-size:12px; color:var(--sub); margin-top:2px; }
+  .de-item .de-memo{ font-size:12.5px; margin-top:6px; color:#43454b; white-space:pre-wrap; }
+  .de-actions{ display:flex; gap:6px; }
+  .no-ev{ font-size:12.5px; color:var(--sub); padding:8px 2px; }
+
+  .divider{ height:1px; background:var(--line); margin:16px 0 6px; }
+  .rec-block{ margin-top:6px; }
+  .rec-block .rl{ display:flex; align-items:center; gap:6px; font-weight:800; font-size:12.5px; margin:10px 0 5px; }
+  .rec-block .rl .dot{ width:8px; height:8px; border-radius:3px; }
+  .rec-block .rl .dot.bang{ background:var(--bang); }
+  .rec-block .rl .dot.song{ background:var(--song); }
+  .rec-block textarea{
+    width:100%; border:1px solid var(--line-strong); border-radius:9px; padding:9px 10px; min-height:56px; resize:vertical; line-height:1.5;
+  }
+
+  /* 연동(설정) 모달 */
+  .sync-status{ display:flex; align-items:center; gap:8px; font-size:12.5px; margin:6px 0 12px; }
+  .sdot{ width:9px; height:9px; border-radius:50%; background:#c7c7cc; }
+  .sdot.on{ background:var(--offline); }
+  .sdot.warn{ background:#d9a441; }
+  .sync-help{ font-size:12px; color:#54565c; background:#f7f7f5; border:1px solid var(--line); border-radius:10px; padding:10px 12px; line-height:1.6; }
+  .sync-help code{ background:#ececeb; padding:1px 5px; border-radius:5px; font-size:11.5px; }
+  .auth-row{ margin:8px 0; }
+  .auth-row input{ width:100%; border:1px solid var(--line-strong); border-radius:9px; padding:9px 10px; }
+
+  /* 토스트 */
+  .toast{
+    position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(20px);
+    background:#2b2d33; color:#fff; font-size:12.5px; font-weight:600;
+    padding:9px 15px; border-radius:10px; opacity:0; pointer-events:none;
+    transition:opacity .2s, transform .2s; z-index:90; box-shadow:var(--shadow);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* 하단 고정 추가 버튼(모바일 편의) */
+  .fab{
+    position:fixed; right:16px; bottom:18px; z-index:50;
+    background:var(--primary); color:#fff; border:none; border-radius:14px;
+    padding:12px 16px; font-weight:800; font-size:13px; box-shadow:0 6px 18px rgba(66,112,125,.4);
+    display:none;
+  }
+  .fab.show{ display:block; }
+
+  /* ================= PC 레이아웃 ================= */
+  @media (min-width:860px){
+    :root{ --fs:14px; }
+    .wrap{ padding-bottom:40px; }
+    .cell{ min-height:96px; }
+    .overlay{ align-items:center; }
+    .sheet{ border-radius:18px; max-height:86vh; }
+    .fab{ display:none !important; }
+    .brand h1{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app">
+  <div class="inner">
+    <div class="brand">
+      <h1>B<span class="amp">&amp;</span>S's Study Rutin</h1>
+      <span class="tag">Bang · Song</span>
+    </div>
+    <button class="gear" id="btnSync" title="공유 · 연동 설정" aria-label="공유 연동 설정">⚙</button>
+  </div>
+  <div class="inner">
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="rules">규칙</button>
+      <button class="tab" data-tab="schedule">일정</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ===================== 규칙 탭 ===================== -->
+  <section class="view active" id="view-rules">
+    <div class="card">
+      <div class="rule-group">
+        <h2><span class="k"></span>공부 &amp; 목표</h2>
+        <div class="kv"><span class="kk">Bang</span><span>한국사 · <b>2026년 안에 시험 보기</b></span></div>
+        <div class="kv"><span class="kk">Song</span><span>토익 · 오픽 · 운전면허 · <b>2026년 안에 시험 보기</b></span></div>
+      </div>
+
+      <div class="rule-group">
+        <h2><span class="k"></span>장소 &amp; 시간</h2>
+        <ul>
+          <li>스터디 일정은 매월 각자의 스케줄에 따라 정함</li>
+          <li>만나는 장소는 <b>카공족 신림점</b></li>
+          <li><b>평일</b> 오후 8시~10시 <span class="rule-note">(Song 쉬는 날이면 오후 2시~10시)</span></li>
+          <li><b>주말</b> Bang 데이일 경우 오후 4시~10시 / 오프일 경우 오후 2시~10시</li>
+          <li>저녁 식사 시간은 오후 <b>6~7시</b></li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h2><span class="k"></span>날씨</h2>
+        <ul>
+          <li>날씨가 좋으면 만나서 진행</li>
+          <li>비·눈이 오거나 날씨가 안 좋으면 <b>상호 합의 후 화상</b>으로 스터디</li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h2><span class="k"></span>진행 방식</h2>
+        <ul>
+          <li>정해진 시간은 무조건 지키기, 더 하고 싶으면 추가로 해도 됨</li>
+          <li>시작 시 <b>그날 무엇을 할지 서로 공유</b></li>
+          <li>시간 내 못 끝낸 건 <b>숙제로 해오기</b></li>
+          <li class="rule-note">이 외 숙제는 없지만, 서로 공부를 너무 안 한다 싶으면 줄 수도 있음</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 일정 탭 ===================== -->
+  <section class="view" id="view-schedule">
+    <div class="card">
+      <div class="filter">
+        <h3>기간 검색</h3>
+        <div class="row">
+          <input type="date" id="fFrom" aria-label="시작일" />
+          <span class="sep">~</span>
+          <input type="date" id="fTo" aria-label="종료일" />
+          <button class="btn primary tiny" id="fSearch">검색</button>
+          <button class="btn ghost tiny" id="fReset">초기화</button>
+        </div>
+        <div class="filter-err" id="fErr">시작일은 종료일보다 늦을 수 없어요.</div>
+
+        <div class="results" id="fResults">
+          <div class="rhead" id="fRhead"></div>
+          <div id="fList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cal-toolbar">
+        <div class="month-nav">
+          <button id="prevM" aria-label="이전 달">‹</button>
+          <div class="mtitle" id="mtitle">2026년 9월</div>
+          <button id="nextM" aria-label="다음 달">›</button>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn ghost tiny" id="todayBtn">오늘</button>
+          <button class="btn primary tiny" id="addBtn">+ 일정</button>
+        </div>
+      </div>
+
+      <div class="cal">
+        <div class="dow">
+          <span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span>
+        </div>
+        <div class="grid" id="calGrid"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<button class="fab" id="fab">+ 일정 추가</button>
+
+<!-- ===================== 일자 상세 모달 ===================== -->
+<div class="overlay" id="dayOverlay">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <button class="close-x" data-close="day">✕</button>
+    <h3 class="mtitle" id="dayTitle">날짜</h3>
+
+    <div class="day-events" id="dayEvents"></div>
+    <button class="btn ghost tiny" id="dayAddEv" style="margin-top:4px;">+ 이 날에 일정 추가</button>
+
+    <div class="divider"></div>
+    <div class="rec-block">
+      <div style="font-size:12.5px; font-weight:800; color:var(--primary-ink);">공부 기록</div>
+      <div class="rl"><span class="dot bang"></span>Bang</div>
+      <textarea id="recBang" placeholder="예) 한국사 3강 완강, 조선 전기 정리"></textarea>
+      <div class="rl"><span class="dot song"></span>Song</div>
+      <textarea id="recSong" placeholder="예) 토익 LC 파트3 20문항, 오픽 IM 스크립트 2개"></textarea>
+    </div>
+
+    <div class="mactions">
+      <button class="btn ghost" data-close="day">닫기</button>
+      <button class="btn primary" id="recSave">기록 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 일정 추가/수정 모달 ===================== -->
+<div class="overlay" id="evOverlay">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <button class="close-x" data-close="ev">✕</button>
+    <h3 class="mtitle" id="evTitle">일정 추가</h3>
+
+    <div class="mrow">
+      <label>날짜</label>
+      <input type="date" id="evDate" />
+    </div>
+    <div class="mrow two">
+      <div>
+        <label>시작 시간</label>
+        <input type="time" id="evStart" />
+      </div>
+      <div>
+        <label>종료 시간</label>
+        <input type="time" id="evEnd" />
+      </div>
+    </div>
+    <div class="mrow">
+      <label>장소</label>
+      <input type="text" id="evPlace" placeholder="카공족 신림점" />
+    </div>
+    <div class="mrow">
+      <label>진행 방식</label>
+      <div class="modechoice" id="evMode">
+        <button type="button" data-mode="offline" class="on">오프라인 (대면)</button>
+        <button type="button" data-mode="online">화상</button>
+      </div>
+    </div>
+    <div class="mrow">
+      <label>메모 (선택)</label>
+      <textarea id="evMemo" placeholder="예) Bang 데이 / 저녁은 6~7시"></textarea>
+    </div>
+    <div class="form-err" id="evErr"></div>
+
+    <div class="mactions">
+      <button class="btn danger" id="evDelete" style="display:none;">삭제</button>
+      <button class="btn ghost" data-close="ev">취소</button>
+      <button class="btn primary" id="evSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 연동(공유) 설정 모달 ===================== -->
+<div class="overlay" id="syncOverlay">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <button class="close-x" data-close="sync">✕</button>
+    <h3 class="mtitle">공유 · 실시간 연동</h3>
+
+    <div class="sync-status">
+      <span class="sdot" id="syncDot"></span>
+      <span id="syncText">로컬 저장 모드 (이 기기에만 저장)</span>
+    </div>
+
+    <div id="syncAuth" style="display:none;">
+      <div class="auth-row"><input type="email" id="authEmail" placeholder="이메일" autocomplete="username" /></div>
+      <div class="auth-row"><input type="password" id="authPw" placeholder="비밀번호" autocomplete="current-password" /></div>
+      <div class="mactions" style="margin-top:8px;">
+        <button class="btn ghost" id="authSignup">회원가입</button>
+        <button class="btn primary" id="authLogin">로그인</button>
+      </div>
+      <div class="form-err" id="authErr"></div>
+    </div>
+
+    <div id="syncSignedIn" style="display:none;">
+      <div style="font-size:12.5px; margin:4px 0 10px;">로그인: <b id="authWho"></b></div>
+      <button class="btn ghost tiny" id="authLogout">로그아웃</button>
+    </div>
+
+    <div class="sync-help" id="syncHelp">
+      지금은 <b>이 기기 저장(로컬)</b>으로 동작합니다. 친구와 실시간으로 공유하려면 파일 맨 위
+      <code>firebaseConfig</code> 값에 Firebase 콘솔의 설정을 붙여넣으세요.
+      값을 넣으면 자동으로 로그인 · 실시간 동기화가 켜집니다. (넣기 전까지는 지금처럼 혼자 안전하게 사용 가능)
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   B&S's Study Rutin
+   - 단일 HTML / 오프라인 우선(localStorage) / Firebase 실시간 동기화는 "대기 상태"
+   - firebaseConfig 를 채우면 자동으로 로그인 + 실시간 동기화 활성화
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   [1] Firebase 설정 (기본은 비어 있음 → 로컬 모드로 동작)
+   실시간 공유를 켜려면 아래 객체에 Firebase 콘솔 값(apiKey, authDomain 등)을 채우세요.
+   예:
+   const firebaseConfig = {
+     apiKey: "xxxx", authDomain: "xxx.firebaseapp.com", projectId: "xxx",
+     storageBucket: "xxx.appspot.com", messagingSenderId: "xxx", appId: "xxx"
+   };
+--------------------------------------------------------------------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyBfrWFvJpIVl0meXBALH075i5hJnCjdvpg",
+  authDomain: "study-plan-35b82.firebaseapp.com",
+  projectId: "study-plan-35b82",
+  storageBucket: "study-plan-35b82.firebasestorage.app",
+  messagingSenderId: "661709573494",
+  appId: "1:661709573494:web:3f001ba535adaaaf9afe57"
+};
+
+const ROOM_ID = 'bns-study-rutin';   // 두 사람이 공유하는 방(문서) 식별자
+const LS_KEY  = 'bns_study_rutin_v1';
+const DEFAULT_PLACE = '카공족 신림점';
+
+/* ---------------------------------------------------------------------------
+   [2] 유틸
+--------------------------------------------------------------------------- */
+function uid(){
+  try { if (crypto && crypto.randomUUID) return crypto.randomUUID(); } catch(e){}
+  return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(16).slice(2,8);
+}
+function pad2(n){ return String(n).padStart(2,'0'); }
+function ymd(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function parseYmd(s){ const [y,m,dd]=s.split('-').map(Number); return new Date(y, m-1, dd); }
+function todayStr(){ return ymd(new Date()); }
+function escapeHtml(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=> t.classList.remove('show'), 1600);
+}
+
+/* ---------------------------------------------------------------------------
+   [3] 상태(데이터) 정의 및 저장/불러오기
+--------------------------------------------------------------------------- */
+function makeEvent(date, start, end, opt={}){
+  return {
+    id: uid(),
+    date: date,
+    start: start,
+    end: end,
+    place: opt.place || DEFAULT_PLACE,
+    mode: opt.mode === 'online' ? 'online' : 'offline',
+    memo: opt.memo || ''
+  };
+}
+
+// 9월 초기 일정(요청분) — 2026년 기준
+function defaultState(){
+  return {
+    events: [
+      makeEvent('2026-09-05','17:00','21:00'),
+      makeEvent('2026-09-07','20:00','22:00'),
+      makeEvent('2026-09-08','20:00','22:00'),
+      makeEvent('2026-09-16','20:00','22:00'),
+      makeEvent('2026-09-19','16:00','22:00'),
+    ],
+    records: {},           // { 'YYYY-MM-DD': { bang:'', song:'' } }
+    updatedAt: Date.now()
+  };
+}
+
+let state = null;
+
+// localStorage 사용 가능 여부 확인(사생활 보호 모드 등에서 실패 대비)
+let lsOK = true;
+try {
+  const k='__t'; localStorage.setItem(k,'1'); localStorage.removeItem(k);
+} catch(e){ lsOK = false; }
+
+function loadState(){
+  if (!lsOK) return defaultState();
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    // 최소 구조 보정
+    if (!parsed || typeof parsed !== 'object') return defaultState();
+    if (!Array.isArray(parsed.events)) parsed.events = [];
+    if (!parsed.records || typeof parsed.records !== 'object') parsed.records = {};
+    if (!parsed.updatedAt) parsed.updatedAt = Date.now();
+    // 이벤트 필드 보정
+    parsed.events = parsed.events.map(ev => ({
+      id: ev.id || uid(),
+      date: ev.date, start: ev.start, end: ev.end,
+      place: ev.place || DEFAULT_PLACE,
+      mode: ev.mode === 'online' ? 'online' : 'offline',
+      memo: ev.memo || ''
+    })).filter(ev => ev.date);
+    return parsed;
+  } catch(e){
+    console.warn('상태 불러오기 실패, 기본값 사용:', e);
+    return defaultState();
+  }
+}
+
+// 로컬 저장 + (연동 활성 시) 원격 반영
+function saveState(opts={}){
+  state.updatedAt = Date.now();
+  if (lsOK){
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+    catch(e){ console.warn('로컬 저장 실패:', e); }
+  }
+  if (!opts.fromRemote) pushRemote();  // 원격에서 내려온 반영은 다시 올리지 않음(에코 방지)
+}
+
+/* ---------------------------------------------------------------------------
+   [4] 탭 전환
+--------------------------------------------------------------------------- */
+document.getElementById('tabs').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.tab'); if (!btn) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const tab = btn.dataset.tab;
+  document.getElementById('view-rules').classList.toggle('active', tab==='rules');
+  document.getElementById('view-schedule').classList.toggle('active', tab==='schedule');
+  document.getElementById('fab').classList.toggle('show', tab==='schedule');
+});
+
+/* ---------------------------------------------------------------------------
+   [5] 달력 렌더링
+--------------------------------------------------------------------------- */
+let viewYear, viewMonth; // 현재 보고 있는 달(0-based month)
+(function initMonth(){
+  const t = new Date();
+  viewYear = t.getFullYear(); viewMonth = t.getMonth();
+})();
+
+function eventsByDate(dateStr){
+  return state.events
+    .filter(ev => ev.date === dateStr)
+    .sort((a,b)=> (a.start||'').localeCompare(b.start||''));
+}
+function hasRecord(dateStr){
+  const r = state.records[dateStr];
+  return !!(r && ((r.bang && r.bang.trim()) || (r.song && r.song.trim())));
+}
+
+function renderCalendar(){
+  document.getElementById('mtitle').textContent = viewYear + '년 ' + (viewMonth+1) + '월';
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  const first = new Date(viewYear, viewMonth, 1);
+  const startDow = first.getDay();                 // 0(일)~6(토)
+  const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+  const today = todayStr();
+
+  // 앞쪽 빈 칸
+  for (let i=0; i<startDow; i++){
+    const pad = document.createElement('div');
+    pad.className = 'cell pad';
+    grid.appendChild(pad);
+  }
+
+  for (let d=1; d<=daysInMonth; d++){
+    const dateStr = viewYear+'-'+pad2(viewMonth+1)+'-'+pad2(d);
+    const dow = new Date(viewYear, viewMonth, d).getDay();
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (dateStr===today ? ' today' : '');
+    cell.dataset.date = dateStr;
+
+    const dnumCls = dow===0 ? 'dnum sun' : (dow===6 ? 'dnum sat' : 'dnum');
+    let html = '<span class="'+dnumCls+'">'+d+'</span><div class="mk">';
+
+    const evs = eventsByDate(dateStr);
+    evs.slice(0,2).forEach(ev=>{
+      const cls = ev.mode==='online' ? 'online' : 'offline';
+      html += '<span class="ev-chip '+cls+'">'+escapeHtml(ev.start||'')+'</span>';
+    });
+    if (evs.length > 2){
+      html += '<span class="ev-chip offline">+'+(evs.length-2)+'</span>';
+    }
+    if (hasRecord(dateStr)){
+      html += '<span class="rec-dot">✎ 기록</span>';
+    }
+    html += '</div>';
+    cell.innerHTML = html;
+    grid.appendChild(cell);
+  }
+}
+
+document.getElementById('prevM').addEventListener('click', ()=>{
+  viewMonth--; if (viewMonth<0){ viewMonth=11; viewYear--; } renderCalendar();
+});
+document.getElementById('nextM').addEventListener('click', ()=>{
+  viewMonth++; if (viewMonth>11){ viewMonth=0; viewYear++; } renderCalendar();
+});
+document.getElementById('todayBtn').addEventListener('click', ()=>{
+  const t = new Date(); viewYear=t.getFullYear(); viewMonth=t.getMonth(); renderCalendar();
+});
+
+// 달력 셀 클릭 → 일자 상세 모달
+document.getElementById('calGrid').addEventListener('click', (e)=>{
+  const cell = e.target.closest('.cell'); if (!cell || cell.classList.contains('pad')) return;
+  openDay(cell.dataset.date);
+});
+
+/* ---------------------------------------------------------------------------
+   [6] 일자 상세 모달 (일정 목록 + 공부 기록)
+--------------------------------------------------------------------------- */
+let currentDay = null;
+
+function fmtDayTitle(dateStr){
+  const d = parseYmd(dateStr);
+  const w = ['일','월','화','수','목','금','토'][d.getDay()];
+  return (d.getMonth()+1)+'월 '+d.getDate()+'일 ('+w+')';
+}
+
+function renderDayEvents(dateStr){
+  const box = document.getElementById('dayEvents');
+  const evs = eventsByDate(dateStr);
+  if (!evs.length){
+    box.innerHTML = '<div class="no-ev">이 날 등록된 일정이 없어요.</div>';
+    return;
+  }
+  box.innerHTML = evs.map(ev=>{
+    const badge = ev.mode==='online'
+      ? '<span class="badge online">화상</span>'
+      : '<span class="badge offline">대면</span>';
+    const memo = ev.memo && ev.memo.trim()
+      ? '<div class="de-memo">'+escapeHtml(ev.memo)+'</div>' : '';
+    return '<div class="de-item">'
+      + '<div class="de-top">'
+      +   '<div><span class="de-time">'+escapeHtml(ev.start||'')+' ~ '+escapeHtml(ev.end||'')+'</span>'+badge+'</div>'
+      +   '<div class="de-actions">'
+      +     '<button class="btn tiny ghost" data-edit="'+ev.id+'">수정</button>'
+      +     '<button class="btn tiny danger" data-del="'+ev.id+'">삭제</button>'
+      +   '</div>'
+      + '</div>'
+      + '<div class="de-place">'+escapeHtml(ev.place||DEFAULT_PLACE)+'</div>'
+      + memo
+      + '</div>';
+  }).join('');
+}
+
+function openDay(dateStr){
+  currentDay = dateStr;
+  document.getElementById('dayTitle').textContent = fmtDayTitle(dateStr);
+  renderDayEvents(dateStr);
+  const rec = state.records[dateStr] || {};
+  document.getElementById('recBang').value = rec.bang || '';
+  document.getElementById('recSong').value = rec.song || '';
+  showOverlay('day');
+}
+
+// 일자 모달 내부 이벤트(수정/삭제)
+document.getElementById('dayEvents').addEventListener('click', (e)=>{
+  const editId = e.target.getAttribute('data-edit');
+  const delId  = e.target.getAttribute('data-del');
+  if (editId){ openEventForm(editId); }
+  else if (delId){
+    if (confirm('이 일정을 삭제할까요?')){
+      state.events = state.events.filter(ev=>ev.id!==delId);
+      saveState();
+      renderDayEvents(currentDay); renderCalendar();
+      toast('일정을 삭제했어요.');
+    }
+  }
+});
+
+// 이 날에 일정 추가
+document.getElementById('dayAddEv').addEventListener('click', ()=> openEventForm(null, currentDay));
+
+// 공부 기록 저장
+document.getElementById('recSave').addEventListener('click', ()=>{
+  const bang = document.getElementById('recBang').value;
+  const song = document.getElementById('recSong').value;
+  if (!bang.trim() && !song.trim()){
+    delete state.records[currentDay];   // 둘 다 비면 기록 제거
+  } else {
+    state.records[currentDay] = { bang: bang, song: song };
+  }
+  saveState();
+  renderCalendar();
+  toast('공부 기록을 저장했어요.');
+});
+
+/* ---------------------------------------------------------------------------
+   [7] 일정 추가/수정 모달
+--------------------------------------------------------------------------- */
+let editingEventId = null;
+
+function setMode(mode){
+  document.querySelectorAll('#evMode button').forEach(b=>{
+    b.classList.toggle('on', b.dataset.mode === mode);
+  });
+}
+document.getElementById('evMode').addEventListener('click', (e)=>{
+  const b = e.target.closest('button'); if (!b) return;
+  setMode(b.dataset.mode);
+});
+
+// id 가 있으면 수정, 없으면 신규(prefillDate 로 날짜 기본값 지정)
+function openEventForm(id, prefillDate){
+  editingEventId = id || null;
+  const errEl = document.getElementById('evErr'); errEl.classList.remove('show'); errEl.textContent='';
+  document.getElementById('evTitle').textContent = id ? '일정 수정' : '일정 추가';
+  document.getElementById('evDelete').style.display = id ? '' : 'none';
+
+  if (id){
+    const ev = state.events.find(x=>x.id===id);
+    if (!ev) return;
+    document.getElementById('evDate').value  = ev.date;
+    document.getElementById('evStart').value = ev.start || '';
+    document.getElementById('evEnd').value   = ev.end || '';
+    document.getElementById('evPlace').value = ev.place || DEFAULT_PLACE;
+    document.getElementById('evMemo').value  = ev.memo || '';
+    setMode(ev.mode || 'offline');
+  } else {
+    document.getElementById('evDate').value  = prefillDate || todayStr();
+    document.getElementById('evStart').value = '20:00';
+    document.getElementById('evEnd').value   = '22:00';
+    document.getElementById('evPlace').value = DEFAULT_PLACE;
+    document.getElementById('evMemo').value  = '';
+    setMode('offline');
+  }
+  showOverlay('ev');
+}
+
+document.getElementById('addBtn').addEventListener('click', ()=> openEventForm(null, null));
+document.getElementById('fab').addEventListener('click', ()=> openEventForm(null, null));
+
+// 저장(입력값 검증 포함)
+document.getElementById('evSave').addEventListener('click', ()=>{
+  const date  = document.getElementById('evDate').value;
+  const start = document.getElementById('evStart').value;
+  const end   = document.getElementById('evEnd').value;
+  const place = document.getElementById('evPlace').value.trim() || DEFAULT_PLACE;
+  const memo  = document.getElementById('evMemo').value;
+  const mode  = document.querySelector('#evMode button.on')?.dataset.mode || 'offline';
+  const errEl = document.getElementById('evErr');
+
+  // --- 입력값 검증 ---
+  if (!date){ return showFormErr(errEl, '날짜를 선택해 주세요.'); }
+  if (!start || !end){ return showFormErr(errEl, '시작·종료 시간을 모두 입력해 주세요.'); }
+  if (end <= start){ return showFormErr(errEl, '종료 시간은 시작 시간보다 늦어야 해요.'); }
+
+  if (editingEventId){
+    const ev = state.events.find(x=>x.id===editingEventId);
+    if (ev){ ev.date=date; ev.start=start; ev.end=end; ev.place=place; ev.memo=memo; ev.mode=mode; }
+    toast('일정을 수정했어요.');
+  } else {
+    state.events.push(makeEvent(date, start, end, {place, mode, memo}));
+    toast('일정을 추가했어요.');
+  }
+  saveState();
+  renderCalendar();
+  // 상세 모달이 열려 있으면 갱신
+  if (document.getElementById('dayOverlay').classList.contains('show') && currentDay){
+    renderDayEvents(currentDay);
+  }
+  // 필터 결과가 열려 있으면 갱신
+  if (document.getElementById('fResults').classList.contains('show')) runFilter(true);
+  hideOverlay('ev');
+});
+
+function showFormErr(el, msg){ el.textContent=msg; el.classList.add('show'); }
+
+// 삭제(수정 모달 안)
+document.getElementById('evDelete').addEventListener('click', ()=>{
+  if (!editingEventId) return;
+  if (!confirm('이 일정을 삭제할까요?')) return;
+  state.events = state.events.filter(ev=>ev.id!==editingEventId);
+  saveState(); renderCalendar();
+  if (currentDay) renderDayEvents(currentDay);
+  if (document.getElementById('fResults').classList.contains('show')) runFilter(true);
+  hideOverlay('ev');
+  toast('일정을 삭제했어요.');
+});
+
+/* ---------------------------------------------------------------------------
+   [8] 기간 검색(필터)
+--------------------------------------------------------------------------- */
+function runFilter(keepOpen){
+  const from = document.getElementById('fFrom').value;
+  const to   = document.getElementById('fTo').value;
+  const errEl = document.getElementById('fErr');
+  const results = document.getElementById('fResults');
+  errEl.classList.remove('show');
+
+  if (!from && !to){
+    // 둘 다 비어 있으면 전체 표시
+  } else if (from && to && from > to){
+    errEl.classList.add('show'); results.classList.remove('show'); return;
+  }
+
+  const lo = from || '0000-00-00';
+  const hi = to   || '9999-99-99';
+
+  // 해당 기간의 "날짜" 수집 (일정 있는 날 + 기록 있는 날)
+  const dateSet = new Set();
+  state.events.forEach(ev=>{ if (ev.date>=lo && ev.date<=hi) dateSet.add(ev.date); });
+  Object.keys(state.records).forEach(dt=>{
+    if (dt>=lo && dt<=hi && hasRecord(dt)) dateSet.add(dt);
+  });
+
+  const dates = Array.from(dateSet).sort();
+  const list = document.getElementById('fList');
+  const rhead = document.getElementById('fRhead');
+
+  if (!dates.length){
+    rhead.textContent = '';
+    list.innerHTML = '<div class="empty">해당 기간에 일정·기록이 없어요.</div>';
+    results.classList.add('show');
+    return;
+  }
+
+  rhead.textContent = dates.length + '일 · ' +
+    (from||'처음') + ' ~ ' + (to||'끝') + ' 범위';
+
+  list.innerHTML = dates.map(dt=>{
+    const d = parseYmd(dt);
+    const w = ['일','월','화','수','목','금','토'][d.getDay()];
+    const label = (d.getMonth()+1)+'/'+d.getDate()+' ('+w+')';
+
+    let body = '';
+    const evs = eventsByDate(dt);
+    evs.forEach(ev=>{
+      const badge = ev.mode==='online'
+        ? '<span class="badge online">화상</span>' : '<span class="badge offline">대면</span>';
+      body += '<div class="rline">'+escapeHtml(ev.start||'')+'~'+escapeHtml(ev.end||'')
+            + ' · '+escapeHtml(ev.place||DEFAULT_PLACE)+badge+'</div>';
+    });
+    const r = state.records[dt];
+    if (r){
+      if (r.bang && r.bang.trim())
+        body += '<div class="rec-mini"><span class="nm bang">Bang</span> '+escapeHtml(r.bang)+'</div>';
+      if (r.song && r.song.trim())
+        body += '<div class="rec-mini"><span class="nm song">Song</span> '+escapeHtml(r.song)+'</div>';
+    }
+    if (!body) body = '<div class="rline" style="color:var(--sub)">내용 없음</div>';
+
+    return '<div class="ritem" data-open="'+dt+'">'
+         + '<div class="rdate">'+label+'</div>'
+         + '<div class="rbody">'+body+'</div>'
+         + '</div>';
+  }).join('');
+
+  results.classList.add('show');
+}
+
+document.getElementById('fSearch').addEventListener('click', ()=> runFilter());
+document.getElementById('fReset').addEventListener('click', ()=>{
+  document.getElementById('fFrom').value = '';
+  document.getElementById('fTo').value = '';
+  document.getElementById('fErr').classList.remove('show');
+  document.getElementById('fResults').classList.remove('show');
+});
+// 검색 결과 항목 클릭 → 해당 날짜 상세 열기
+document.getElementById('fList').addEventListener('click', (e)=>{
+  const item = e.target.closest('[data-open]'); if (!item) return;
+  openDay(item.getAttribute('data-open'));
+});
+
+/* ---------------------------------------------------------------------------
+   [9] 모달(오버레이) 공통 제어
+--------------------------------------------------------------------------- */
+const overlays = {
+  day:  document.getElementById('dayOverlay'),
+  ev:   document.getElementById('evOverlay'),
+  sync: document.getElementById('syncOverlay')
+};
+function showOverlay(key){ overlays[key].classList.add('show'); }
+function hideOverlay(key){ overlays[key].classList.remove('show'); }
+
+// 닫기 버튼(✕ / 취소 / 닫기)
+document.body.addEventListener('click', (e)=>{
+  const c = e.target.getAttribute('data-close');
+  if (c) hideOverlay(c);
+});
+// 배경 클릭 시 닫기
+Object.keys(overlays).forEach(key=>{
+  overlays[key].addEventListener('click', (e)=>{
+    if (e.target === overlays[key]) hideOverlay(key);
+  });
+});
+// 설정(연동) 열기
+document.getElementById('btnSync').addEventListener('click', ()=> showOverlay('sync'));
+
+/* ---------------------------------------------------------------------------
+   [10] Firebase 실시간 연동 (대기 상태 → config 채우면 자동 활성)
+   - app / auth / firestore compat SDK 를 필요할 때만 동적 로드 (로컬 모드일 땐 네트워크 미사용)
+   - 두 사람이 같은 문서(studyRooms/ROOM_ID)를 공유 → 실시간 반영
+--------------------------------------------------------------------------- */
+const SYNC = { active:false, db:null, auth:null, user:null, docRef:null, unsub:null, booting:false };
+
+function configFilled(){
+  return firebaseConfig && typeof firebaseConfig.apiKey === 'string' && firebaseConfig.apiKey.length > 0;
+}
+
+function loadScript(src){
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = src; s.async = true;
+    s.onload = resolve;
+    s.onerror = ()=> reject(new Error('스크립트 로드 실패: '+src));
+    document.head.appendChild(s);
+  });
+}
+
+async function loadFirebaseSDK(){
+  const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
+  await loadScript(base+'firebase-app-compat.js');
+  await loadScript(base+'firebase-auth-compat.js');
+  await loadScript(base+'firebase-firestore-compat.js');
+}
+
+function setSyncUI(mode, extra){
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncText');
+  const authBox = document.getElementById('syncAuth');
+  const signed  = document.getElementById('syncSignedIn');
+  const help    = document.getElementById('syncHelp');
+
+  dot.className = 'sdot';
+  authBox.style.display = 'none';
+  signed.style.display = 'none';
+
+  if (mode === 'local'){
+    txt.textContent = '로컬 저장 모드 (이 기기에만 저장)';
+    help.style.display = '';
+  } else if (mode === 'need-login'){
+    dot.classList.add('warn');
+    txt.textContent = '연동 준비됨 · 로그인이 필요해요';
+    authBox.style.display = '';
+    help.style.display = 'none';
+  } else if (mode === 'connected'){
+    dot.classList.add('on');
+    txt.textContent = '실시간 동기화 중';
+    signed.style.display = '';
+    document.getElementById('authWho').textContent = extra || '';
+    help.style.display = 'none';
+  } else if (mode === 'error'){
+    dot.classList.add('warn');
+    txt.textContent = '연동 오류 · 로컬 모드로 동작 중';
+    help.style.display = '';
+  }
+}
+
+async function initSync(){
+  if (SYNC.booting) return;
+  if (!configFilled()){ setSyncUI('local'); return; }
+  SYNC.booting = true;
+  try {
+    await loadFirebaseSDK();
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    SYNC.auth = firebase.auth();
+    SYNC.db   = firebase.firestore();
+    SYNC.active = true;
+
+    SYNC.auth.onAuthStateChanged((user)=>{
+      SYNC.user = user;
+      if (user){
+        attachRoom();
+        setSyncUI('connected', user.email || user.uid);
+      } else {
+        detachRoom();
+        setSyncUI('need-login');
+      }
+    });
+  } catch(e){
+    console.warn('Firebase 초기화 실패:', e);
+    SYNC.active = false;
+    setSyncUI('error');
+  } finally {
+    SYNC.booting = false;
+  }
+}
+
+// 공유 문서 구독(실시간 수신)
+function attachRoom(){
+  if (!SYNC.active || !SYNC.user) return;
+  try {
+    SYNC.docRef = SYNC.db.collection('studyRooms').doc(ROOM_ID);
+    if (SYNC.unsub) SYNC.unsub();
+    SYNC.unsub = SYNC.docRef.onSnapshot((snap)=>{
+      // 내 로컬 쓰기로 인한 에코는 무시(중복 반영 방지)
+      if (snap.metadata.hasPendingWrites) return;
+      if (!snap.exists){
+        // 문서가 없으면 현재 로컬 상태를 최초 업로드
+        pushRemote(true);
+        return;
+      }
+      const remote = snap.data();
+      if (!remote) return;
+      // 원격이 더 최신일 때만 반영
+      if ((remote.updatedAt||0) >= (state.updatedAt||0)){
+        applyRemote(remote);
+      }
+    }, (err)=>{
+      console.warn('실시간 수신 오류:', err);
+    });
+  } catch(e){ console.warn('문서 구독 실패:', e); }
+}
+function detachRoom(){
+  if (SYNC.unsub){ try{ SYNC.unsub(); }catch(e){} SYNC.unsub=null; }
+  SYNC.docRef = null;
+}
+
+// 원격 → 로컬 반영 후 화면 갱신
+function applyRemote(remote){
+  state.events  = Array.isArray(remote.events) ? remote.events : [];
+  state.records = (remote.records && typeof remote.records==='object') ? remote.records : {};
+  state.updatedAt = remote.updatedAt || Date.now();
+  saveState({fromRemote:true});   // 로컬에도 저장(원격으로 되돌려 올리지 않음)
+  renderCalendar();
+  if (document.getElementById('dayOverlay').classList.contains('show') && currentDay){
+    renderDayEvents(currentDay);
+    const rec = state.records[currentDay] || {};
+    document.getElementById('recBang').value = rec.bang || '';
+    document.getElementById('recSong').value = rec.song || '';
+  }
+  if (document.getElementById('fResults').classList.contains('show')) runFilter(true);
+}
+
+// 로컬 → 원격 업로드
+function pushRemote(force){
+  if (!SYNC.active || !SYNC.user || !SYNC.docRef){
+    if (force) console.warn('연동 비활성 상태 — 업로드 생략');
+    return;
+  }
+  try {
+    SYNC.docRef.set({
+      events: state.events,
+      records: state.records,
+      updatedAt: state.updatedAt
+    }, { merge:false }).catch(err=> console.warn('업로드 실패:', err));
+  } catch(e){ console.warn('업로드 예외:', e); }
+}
+
+/* 로그인 / 회원가입 / 로그아웃 */
+function showAuthErr(msg){
+  const el = document.getElementById('authErr');
+  el.textContent = msg; el.classList.add('show');
+}
+document.getElementById('authLogin').addEventListener('click', async ()=>{
+  const email = document.getElementById('authEmail').value.trim();
+  const pw = document.getElementById('authPw').value;
+  document.getElementById('authErr').classList.remove('show');
+  if (!email || !pw){ return showAuthErr('이메일과 비밀번호를 입력해 주세요.'); }
+  try { await SYNC.auth.signInWithEmailAndPassword(email, pw); toast('로그인했어요.'); }
+  catch(e){ showAuthErr('로그인 실패: ' + (e.message||e.code||'')); }
+});
+document.getElementById('authSignup').addEventListener('click', async ()=>{
+  const email = document.getElementById('authEmail').value.trim();
+  const pw = document.getElementById('authPw').value;
+  document.getElementById('authErr').classList.remove('show');
+  if (!email || !pw){ return showAuthErr('이메일과 비밀번호를 입력해 주세요.'); }
+  try { await SYNC.auth.createUserWithEmailAndPassword(email, pw); toast('가입 후 로그인했어요.'); }
+  catch(e){ showAuthErr('가입 실패: ' + (e.message||e.code||'')); }
+});
+document.getElementById('authLogout').addEventListener('click', async ()=>{
+  try { await SYNC.auth.signOut(); toast('로그아웃했어요.'); } catch(e){}
+});
+
+/* ---------------------------------------------------------------------------
+   [11] 시작
+--------------------------------------------------------------------------- */
+function boot(){
+  state = loadState();
+  renderCalendar();
+  setSyncUI('local');       // 기본 표시
+  initSync();               // config 채워져 있으면 자동으로 연동 시도
+}
+boot();
+</script>
+</body>
+</html>
