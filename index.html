@@ -580,7 +580,7 @@ function defaultState(){
       makeEvent('2026-09-19','16:00','22:00'),
     ],
     records: {},           // { 'YYYY-MM-DD': { bang:'', song:'' } }
-    updatedAt: Date.now()
+    updatedAt: 0           // 아직 아무 기록도 없는 '빈 기본값'은 0 → 실제 클라우드 데이터가 항상 우선됨
   };
 }
 
@@ -1098,20 +1098,38 @@ function attachRoom(){
   try {
     SYNC.docRef = SYNC.db.collection('studyRooms').doc(ROOM_ID);
     if (SYNC.unsub) SYNC.unsub();
+    let firstSnap = true;   // 로그인 직후 첫 수신인지 여부
     SYNC.unsub = SYNC.docRef.onSnapshot((snap)=>{
       // 내 로컬 쓰기로 인한 에코는 무시(중복 반영 방지)
       if (snap.metadata.hasPendingWrites) return;
+
+      // 클라우드에 문서가 아직 없으면(최초) 현재 로컬 상태를 업로드
       if (!snap.exists){
-        // 문서가 없으면 현재 로컬 상태를 최초 업로드
+        firstSnap = false;
         pushRemote(true);
         return;
       }
+
       const remote = snap.data();
       if (!remote) return;
-      // 원격이 더 최신일 때만 반영
-      if ((remote.updatedAt||0) >= (state.updatedAt||0)){
-        applyRemote(remote);
+      const rTime = remote.updatedAt || 0;   // 클라우드 마지막 저장 시각
+      const lTime = state.updatedAt || 0;    // 내 로컬 마지막 저장 시각
+
+      if (firstSnap){
+        // 로그인 직후 첫 동기화:
+        //  - 내 로컬이 더 최신이면 → 내 기록을 클라우드로 올려서 보존
+        //  - 그 외에는 → 클라우드 내용을 화면에 반영(클라우드가 기준)
+        firstSnap = false;
+        if (lTime > rTime){
+          pushRemote(true);
+        } else {
+          applyRemote(remote);
+        }
+        return;
       }
+
+      // 이후 실시간 수신(상대방 변경 등)은 그대로 반영
+      applyRemote(remote);
     }, (err)=>{
       console.warn('실시간 수신 오류:', err);
     });
