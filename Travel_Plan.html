@@ -366,35 +366,33 @@
   body.viewer .ck-label{ cursor:default; }
   .rt-link{margin-top:6px;}
 
-  /* ===== 모바일 가독성 (폰 전용, PC는 그대로) ===== */
+  /* ===== 모바일 글자 크기 (폰 전용 · PC보다 조금 작게 · 입력칸만 16px) ===== */
   @media (max-width:640px){
-    body{ font-size:15.5px; line-height:1.62; }
-    /* iOS에서 입력할 때 화면이 확대되지 않도록 16px */
+    body{ font-size:13px; line-height:1.55; }
+    /* iOS에서 입력할 때 화면이 확대되지 않도록 입력칸만 16px 유지 */
     input,select,textarea,.field input,.field select,.field textarea{ font-size:16px; }
+    /* 예산 카드의 금액 숫자 (모바일에서만 작게) */
+    .stat .val{ font-size:14px; }
+    .stat .val.big{ font-size:17px; }
     .wrap{ padding:0 14px 96px; }
     .trip-head{ padding:22px 0 8px; }
-    .trip-title{ font-size:24px; }
-    .section{ margin-top:30px; }
-    .section-head{ margin-bottom:16px; gap:8px 10px; }
-    .section-head h2{ font-size:17px; }
-    .btn{ padding:10px 15px; font-size:14px; }
-    .btn.sm{ padding:8px 13px; font-size:13.5px; }
-    .icon-btn{ width:40px; height:40px; }
-    .mv-btn{ width:38px; height:38px; font-size:12px; }
-    .day-tab{ font-size:13.5px; padding:9px 15px; }
-    .res-item{ padding:14px; gap:10px 12px; }
-    .res-item .r-title{ font-size:15px; }
-    .res-item .r-meta{ font-size:12.5px; }
-    .tl-time{ font-size:13px; }
-    .tl-title{ font-size:15px; }
-    .tl-note,.tl-hours{ font-size:13px; }
-    .mini-chip{ font-size:11px; padding:2px 9px; }
-    .tl-amt{ font-size:12px; }
-    .ck-label{ gap:12px; }
-    .ck-label input{ width:20px; height:20px; }
-    .ck-label span{ font-size:15px; }
-    .modal-body{ padding:10px 18px 6px; gap:16px; }
-    .wd-chip{ font-size:14px; padding:8px 12px; }
+    .trip-title{ font-size:22px; }
+    .section{ margin-top:26px; }
+    .section-head h2{ font-size:14px; }
+    .btn{ padding:8px 13px; font-size:12px; }
+    .btn.sm{ padding:6px 11px; font-size:11px; }
+    .icon-btn{ width:36px; height:36px; }
+    .mv-btn{ width:34px; height:34px; font-size:11px; }
+    .day-tab{ font-size:11.5px; padding:7px 13px; }
+    .res-item .r-title{ font-size:13px; }
+    .res-item .r-meta{ font-size:11px; }
+    .tl-time{ font-size:11.5px; }
+    .tl-title{ font-size:13px; }
+    .tl-note,.tl-hours{ font-size:11.5px; }
+    .mini-chip{ font-size:10px; }
+    .tl-amt{ font-size:10.5px; }
+    .ck-label span{ font-size:13px; }
+    .wd-chip{ font-size:13px; padding:7px 11px; }
   }
 </style>
 
