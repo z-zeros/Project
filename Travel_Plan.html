@@ -154,7 +154,6 @@
   .stat{display:flex;flex-direction:column;gap:3px;}
   .stat .label{font-size:11px;color:var(--ink-faint);letter-spacing:.02em;}
   .stat .val{font-size:21.5px;font-weight:600;letter-spacing:-.01em;}
-  .stat .val.big{font-size:25px;}
   .stat .val.good{color:var(--good);}
   .stat .val.bad{color:var(--bad);}
   .stat .sub{font-size:12px;font-weight:500;color:var(--ink-soft);}
@@ -371,9 +370,14 @@
     body{ font-size:13px; line-height:1.55; }
     /* iOS에서 입력할 때 화면이 확대되지 않도록 입력칸만 16px 유지 */
     input,select,textarea,.field input,.field select,.field textarea{ font-size:16px; }
-    /* 예산 카드의 금액 숫자 (모바일에서만 작게) */
-    .stat .val{ font-size:14px; }
-    .stat .val.big{ font-size:17px; }
+    /* 예산 카드의 금액 숫자 (모바일에서만 전부 15px) */
+    .stat .val{ font-size:15px; }
+    /* 여행 선택 드롭다운도 다른 요소에 맞춰 작게 */
+    .trip-select{ font-size:12px; padding:6px 28px 6px 12px; }
+    /* 카테고리별 지출: 이름·그래프·금액을 한 줄로 */
+    .cat-row{ grid-template-columns:84px 1fr auto; gap:8px; }
+    .cat-tag{ font-size:11.5px; }
+    .cat-amt{ grid-column:auto; text-align:right; min-width:0; font-size:11px; }
     .wrap{ padding:0 14px 96px; }
     .trip-head{ padding:22px 0 8px; }
     .trip-title{ font-size:22px; }
