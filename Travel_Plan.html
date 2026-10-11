@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#215A78">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -373,8 +373,8 @@
     /* 상단: 제목은 윗줄, 버튼(여행선택·새여행·공유·백업)은 아랫줄에 한 줄로 · 오른쪽 정렬 */
     .topbar-inner{ gap:10px; justify-content:flex-end; }
     .brand{ flex-basis:100%; margin-right:0; }
-    /* iOS에서 입력할 때 화면이 확대되지 않도록 입력칸만 16px 유지 */
-    input,select,textarea,.field input,.field select,.field textarea{ font-size:16px; }
+    /* 입력 글자는 작게 — 자동 줌은 위 viewport(maximum-scale)에서 막아서 입력칸이 안 흔들려요 */
+    input,select,textarea,.field input,.field select,.field textarea{ font-size:14px; }
     /* 예산 카드의 금액 숫자 (모바일에서만 전부 15px) */
     .stat .val{ font-size:15px; }
     /* 여행 선택 드롭다운도 다른 요소에 맞춰 작게 */
