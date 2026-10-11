@@ -2079,7 +2079,7 @@
       state.activeId = trip.id;
       lastSeenAt = data.updatedAt || 0;
       applyingRemote = true; save(); applyingRemote = false;   // 로컬 저장(재업로드 안 함)
-      try{ history.replaceState(null, "", location.pathname + location.search + "#room=" + roomId); }catch(e){}
+      // 주소의 &edit= 키는 일부러 그대로 둠 — 이 링크를 홈 화면에 추가해도 계속 '수정 가능'으로 열리게
       render();
       ensureOwnerSync();
       toast("이제 이 기기에서도 수정할 수 있어요");
