@@ -267,6 +267,7 @@
   .tl-amt{font-size:11px;font-weight:600;color:var(--accent-ink);background:var(--accent-soft);border-radius:999px;padding:1px 8px;}
   .tl-note{font-size:12px;color:var(--ink-soft);margin-top:2px;white-space:pre-wrap;}
   .tl-hours{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+  .tl-pay{font-size:10px;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:1px 7px;}
   .tl-closed{font-size:10px;font-weight:600;padding:1px 8px;border-radius:999px;color:var(--bad);border:1px solid var(--bad);background:var(--bad-soft);}
   .wd-pick{display:flex;gap:6px;flex-wrap:wrap;}
   .wd-chip{font-size:12px;padding:5px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;user-select:none;color:var(--ink-soft);}
@@ -597,6 +598,8 @@
     if(READONLY) return;   // 뷰어(읽기 전용)는 저장하지 않음
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({trips:state.trips, activeId:state.activeId})); }
     catch(e){ /* 저장 실패해도 앱은 계속 동작 */ }
+    // 원격(다른 기기) 변경을 반영하는 중이면 다시 올리지 않음(되울림 방지)
+    if(applyingRemote) return;
     // 실시간 공유 중인 여행이면 방에도 자동으로 반영
     try{
       var t = activeTrip();
@@ -640,7 +643,7 @@
           hours: str(it.hours),
           closed: Array.isArray(it.closed) ? it.closed.map(Number).filter(function(x){ return x>=0 && x<=6; }) : []
         };
-        if(it.resId) o.resId = safeId(it.resId);
+        if(it.resId){ o.resId = safeId(it.resId); o.resOwn = (it.resOwn===false) ? false : true; }
         return o;
       });
     });
@@ -678,6 +681,15 @@
   function findTrip(id){ for(var i=0;i<state.trips.length;i++){ if(state.trips[i].id===id) return state.trips[i]; } return null; }
   function activeTrip(){ return findTrip(state.activeId); }
   function findRes(t, id){ for(var i=0;i<t.reservations.length;i++){ if(t.reservations[i].id===id) return t.reservations[i]; } return null; }
+  // 이 지출(예약·지출)을 연결해 쓰는 일정표 날짜들
+  function itinDaysForRes(t, resId){
+    var out = [];
+    if(!t || !t.itinerary) return out;
+    Object.keys(t.itinerary).forEach(function(d){
+      (t.itinerary[d]||[]).forEach(function(it){ if(it.resId===resId && out.indexOf(d)===-1) out.push(d); });
+    });
+    return out.sort();
+  }
 
   /* ================= 초기(시드) 데이터 ================= */
   function seed(){
@@ -961,6 +973,8 @@
         var st = STATUS_MAP[r.status]||STATUS[0];
         var meta = [];
         if(r.date) meta.push('결제 '+labelDate(r.date));
+        var useDays = itinDaysForRes(t, r.id).filter(function(d){ return d!==r.date; });
+        if(useDays.length) meta.push('일정 '+useDays.map(labelDate).join(', '));
         if(r.memo) meta.push(esc(r.memo));
         var titleHtml = esc(r.title||"(제목 없음)");
         if(/^https?:\/\//i.test(r.link)){ titleHtml = '<a href="'+esc(r.link)+'" target="_blank" rel="noopener">'+titleHtml+'</a>'; }
@@ -1034,6 +1048,8 @@
         // 연결된 예약·지출 항목의 금액 표시
         var rr = it.resId ? findRes(t, it.resId) : null;
         var amtTag = (rr && fmtBoth(rr.krw, rr.jpy)) ? '<span class="tl-amt num">'+fmtBoth(rr.krw, rr.jpy)+'</span>' : '';
+        // 결제일이 이 일정 날짜와 다르면 '결제 M/D' 표시
+        var payTag = (rr && rr.date && rr.date!==active) ? '<span class="tl-pay">결제 '+labelDate(rr.date)+'</span>' : '';
         // 링크가 있으면(http/https만) 제목을 누르면 새 탭으로 열림
         var tlTitle = esc(it.title||"(제목 없음)");
         if(/^https?:\/\//i.test(it.link||"")){ tlTitle = '<a href="'+esc(it.link)+'" target="_blank" rel="noopener">'+tlTitle+'</a>'; }
@@ -1046,7 +1062,7 @@
         var hoursLine = metaBits.length ? '<div class="tl-hours">'+metaBits.join('  ·  ')+'</div>' : '';
         html += '<div class="tl-item">'+
           '<span class="tl-time'+(it.time?'':' empty')+'">'+(it.time?esc(it.time):'시간')+'</span>'+
-          '<div class="tl-body"><div class="tl-title">'+tlTitle+chip+amtTag+closedToday+'</div>'+
+          '<div class="tl-body"><div class="tl-title">'+tlTitle+chip+amtTag+payTag+closedToday+'</div>'+
             hoursLine+
             (it.note?'<div class="tl-note">'+esc(it.note)+'</div>':'')+'</div>'+
           (state.ui.reorder.day
@@ -1185,7 +1201,11 @@
   /* ================= 모달 시스템 ================= */
   var overlay = document.getElementById("overlay");
   var modalEl = document.getElementById("modal");
-  function closeModal(){ overlay.classList.remove("open"); modalEl.innerHTML=""; }
+  function closeModal(){
+    overlay.classList.remove("open"); modalEl.innerHTML="";
+    // 편집하느라 미뤄둔 다른 기기의 변경이 있으면 지금 반영
+    if(pendingRemote){ var pr=pendingRemote; pendingRemote=null; lastSeenAt=Math.max(lastSeenAt, pr.at||0); applyRemoteTrip(pr.roomId, pr.trip); }
+  }
   overlay.addEventListener("mousedown", function(e){ if(e.target===overlay) closeModal(); });
   document.addEventListener("keydown", function(e){ if(e.key==="Escape" && overlay.classList.contains("open")) closeModal(); });
 
@@ -1335,6 +1355,16 @@
     var days = dateRange(t.start,t.end);
     var dayOpts = days.map(function(d,i){ return '<option value="'+d+'"'+(d===day?" selected":"")+'>Day '+(i+1)+' · '+labelDate(d)+'</option>'; }).join("");
     var catOpts = '<option value="">카테고리 없음</option>' + ITIN_CATS.map(function(c){ return '<option value="'+c.key+'"'+(c.key===it.category?" selected":"")+'>'+esc(c.label)+'</option>'; }).join("");
+    // 예약·지출 연결 드롭다운: 이 일정이 '소유'한 항목은 빼고(그건 직접입력에서 다룸), 기존 지출을 연결 대상으로 보여줌
+    var ownedId = (it.resId && it.resOwn!==false) ? it.resId : null;
+    var linkedExisting = (it.resId && it.resOwn===false) ? it.resId : "";
+    var resOpts = '<option value="">새 지출 — 금액 직접 입력</option>' + t.reservations
+      .filter(function(r){ return r.id!==ownedId; })
+      .map(function(r){
+        var dt = r.date ? (" · 결제 "+labelDate(r.date)) : "";
+        var am = fmtBoth(r.krw,r.jpy) || fmtKRW(0);
+        return '<option value="'+r.id+'"'+(r.id===linkedExisting?" selected":"")+'>'+esc(r.title||"(제목 없음)")+dt+' · '+am+'</option>';
+      }).join("");
 
     modalEl.innerHTML =
       '<div class="modal-head"><h3>'+(isNew?"일정 추가":"일정 수정")+'</h3><button class="icon-btn x" id="mX">✕</button></div>'+
@@ -1345,7 +1375,8 @@
         '</div>'+
         '<div class="field"><label>내용</label><input id="f-title" value="'+esc(it.title)+'" placeholder="예: 센소지 관광, 이치란 라멘"></div>'+
         '<div class="field"><label>카테고리 (선택)</label><select id="f-cat">'+catOpts+'</select></div>'+
-        amountBlockHtml("금액 (선택) — 입력하면 예약·지출에 자동 반영", res?res.krw:0, res?res.jpy:0)+
+        '<div class="field"><label>예약·지출 연결 (선택)</label><select id="f-reslink">'+resOpts+'</select><span class="hint" id="reslinkHint"></span></div>'+
+        '<div id="amtWrap">'+amountBlockHtml("금액 (선택)", res?res.krw:0, res?res.jpy:0)+'</div>'+
         '<div class="field"><label>링크 (선택)</label><input id="f-link" value="'+esc(it.link||"")+'" placeholder="지도, 예약 페이지 등 URL"></div>'+
         '<div class="field"><label>영업시간 (선택)</label><input id="f-hours" value="'+esc(it.hours||"")+'" placeholder="예: 11:00 ~ 21:00"></div>'+
         '<div class="field"><label>휴무 요일 (선택) — 고른 요일의 일정에 \'오늘 휴무\'가 표시돼요</label>'+closedPickerHtml(it.closed)+'</div>'+
@@ -1364,12 +1395,30 @@
 
     var amt = bindAmountBlock(res?res.krw:0, res?res.jpy:0);
 
+    // 예약·지출 연결 선택에 따라 금액칸 숨김/표시 + 안내 문구
+    function refreshResLink(){
+      var sel = document.getElementById("f-reslink").value;
+      var aw = document.getElementById("amtWrap");
+      var hint = document.getElementById("reslinkHint");
+      if(sel){
+        aw.style.display = "none";
+        var rr = findRes(t, sel);
+        hint.textContent = rr ? ("이 일정은 ‘"+(rr.title||"")+"’ 지출"+(rr.date?(" (결제 "+labelDate(rr.date)+")"):"")+"에 연결돼요. 금액은 그 항목에서 관리해요.") : "";
+      } else {
+        aw.style.display = "";
+        hint.textContent = "금액을 넣으면 ‘이 일정 날짜’로 예약·지출에 새로 생겨요. 결제일이 다르면, 예약·지출에 먼저 만든 뒤 위에서 연결하세요.";
+      }
+    }
+    document.getElementById("f-reslink").addEventListener("change", refreshResLink);
+    refreshResLink();
+
     document.getElementById("mX").onclick = closeModal;
     document.getElementById("mCancel").onclick = closeModal;
     if(!isNew) document.getElementById("mDel").onclick = function(){
-      confirmModal("이 일정을 삭제할까요?", (it.title||"(제목 없음)")+(res?" — 연결된 예약·지출 항목도 함께 삭제돼요":""), function(){
+      var ownsRes = res && it.resOwn!==false;   // 이 일정이 만든 지출만 함께 삭제
+      confirmModal("이 일정을 삭제할까요?", (it.title||"(제목 없음)")+(ownsRes?" — 이 일정이 만든 예약·지출 항목도 함께 삭제돼요":(res?" — 연결된 예약·지출 항목은 그대로 남아요":"")), function(){
         t.itinerary[day] = list.filter(function(x){return x.id!==it.id;});
-        if(res) t.reservations = t.reservations.filter(function(x){return x.id!==res.id;});
+        if(ownsRes) t.reservations = t.reservations.filter(function(x){return x.id!==res.id;});
         save(); render(); closeModal(); toast("삭제했어요");
       });
     };
@@ -1385,22 +1434,40 @@
       it.hours = document.getElementById("f-hours").value.trim();
       it.closed = readClosed();
 
-      // 금액이 있으면 예약·지출 항목을 만들거나 갱신, 비우면 연결된 항목 삭제
-      var a = amt.read();
-      var hasAmt = a.krw!==0 || a.jpy!==0;
-      var linked = it.resId ? findRes(t, it.resId) : null;
-      if(hasAmt){
-        if(linked){
-          linked.title = it.title; linked.category = itinToResCat(it.category);
-          linked.krw = a.krw; linked.jpy = a.jpy;
-        } else {
-          var nr = {id:uid(), category:itinToResCat(it.category), title:it.title, date:newDay, status:"plan", krw:a.krw, jpy:a.jpy, link:"", memo:""};
-          t.reservations.push(nr);
-          it.resId = nr.id;
+      // 예약·지출 연결 처리
+      var linkSel = document.getElementById("f-reslink").value;
+      var prevRes = it.resId ? findRes(t, it.resId) : null;
+      var prevOwned = prevRes && it.resOwn!==false;   // 이 일정이 '만든(소유)' 항목인지
+      var touchedRes = false;
+      if(linkSel){
+        // 기존 지출에 연결 (새로 만들지 않음, 결제일도 그대로 둠)
+        if(prevOwned && prevRes && prevRes.id!==linkSel){
+          // 이전에 이 일정이 만들었던 항목은 정리(삭제)
+          t.reservations = t.reservations.filter(function(x){ return x.id!==prevRes.id; });
         }
+        it.resId = linkSel; it.resOwn = false; touchedRes = true;
       } else {
-        if(linked) t.reservations = t.reservations.filter(function(x){ return x.id!==linked.id; });
-        delete it.resId;
+        // 새 지출 — 금액 직접 입력(이 일정이 소유)
+        var a = amt.read();
+        var hasAmt = a.krw!==0 || a.jpy!==0;
+        if(prevOwned && prevRes){
+          if(hasAmt){
+            prevRes.title = it.title; prevRes.category = itinToResCat(it.category);
+            prevRes.krw = a.krw; prevRes.jpy = a.jpy;   // 결제일(date)은 유지
+            touchedRes = true;
+          } else {
+            t.reservations = t.reservations.filter(function(x){ return x.id!==prevRes.id; });
+            delete it.resId; delete it.resOwn;
+          }
+        } else {
+          // 이전엔 '연결'만 했던 경우 → 연결만 해제(기존 항목은 삭제하지 않음)
+          if(prevRes){ delete it.resId; delete it.resOwn; }
+          if(hasAmt){
+            var nr = {id:uid(), category:itinToResCat(it.category), title:it.title, date:newDay, status:"plan", krw:a.krw, jpy:a.jpy, link:"", memo:""};
+            t.reservations.push(nr);
+            it.resId = nr.id; it.resOwn = true; touchedRes = true;
+          }
+        }
       }
 
       // 같은 날짜의 기존 일정은 제자리 유지, 날짜를 옮기거나 새 일정이면 해당 날짜 맨 뒤에 추가
@@ -1410,7 +1477,7 @@
         t.itinerary[newDay].push(it);
       }
       state.ui.activeDay[t.id] = newDay;
-      save(); render(); closeModal(); toast((isNew?"추가했어요":"수정했어요")+(hasAmt?" · 예약&지출에도 반영했어요":""));
+      save(); render(); closeModal(); toast((isNew?"추가했어요":"수정했어요")+(touchedRes?" · 예약&지출에도 반영했어요":""));
     };
     setTimeout(function(){ document.getElementById("f-title").focus(); }, 30);
   }
@@ -1847,6 +1914,9 @@
   var ROOMS_KEY = "travelPlanner.rooms";     // { 방ID: {tripId, ownerKey} } — 이 기기가 주인인 방 기록
   var READONLY = false;                       // true면 뷰어(읽기 전용) 모드
   var FDB = null, FB_TRIED = false, pushTimer = null;
+  // 이 기기 고유 id(내가 올린 변경인지 구분) + 내 기기 간 동기화 상태
+  var MYCID = (function(){ try{ var c=localStorage.getItem("travelPlanner.cid"); if(!c){ c=uid()+uid(); localStorage.setItem("travelPlanner.cid",c); } return c; }catch(e){ return uid()+uid(); } })();
+  var ownerUnsub = null, ownerSubRoom = null, pendingRemote = null, applyingRemote = false, lastSeenAt = 0;
 
   function loadRooms(){ try{ return JSON.parse(localStorage.getItem(ROOMS_KEY)) || {}; }catch(e){ return {}; } }
   function saveRooms(o){ try{ localStorage.setItem(ROOMS_KEY, JSON.stringify(o)); }catch(e){} }
@@ -1874,7 +1944,8 @@
   function pushTripNow(trip, roomId){
     var d = roomDoc(roomId);
     if(!d) return;
-    try{ d.set({app:"travelPlanner", v:1, trip: JSON.parse(JSON.stringify(trip)), updatedAt: Date.now()}); }catch(e){}
+    var ts = Date.now();
+    try{ d.set({app:"travelPlanner", v:1, trip: JSON.parse(JSON.stringify(trip)), updatedAt: ts, updatedBy: MYCID}); lastSeenAt = Math.max(lastSeenAt, ts); }catch(e){}
   }
   // 잦은 수정에 대비해 0.5초 모아서 올리기
   function schedulePush(trip, roomId){
@@ -1888,7 +1959,42 @@
     var rm = roomForTrip(trip.id);
     if(!rm){ rm = {roomId: uid()+uid(), ownerKey: uid()+uid()}; setRoomForTrip(trip.id, rm); }
     pushTripNow(trip, rm.roomId);
+    ensureOwnerSync();
     return rm;
+  }
+
+  // 다른 기기에서 받은 내용을 현재 상태에 반영 (로컬 저장만, 재업로드 안 함)
+  function applyRemoteTrip(roomId, tripData){
+    var trip = normalizeTrip(tripData);
+    var idx = -1;
+    for(var i=0;i<state.trips.length;i++){ if(state.trips[i].id===trip.id){ idx=i; break; } }
+    if(idx>=0) state.trips[idx] = trip; else state.trips.push(trip);
+    applyingRemote = true; save(); applyingRemote = false;
+    render();
+    toast("다른 기기의 변경을 불러왔어요");
+  }
+  // 내 기기(수정 가능)끼리 실시간 동기화: 현재 여행의 방을 구독
+  function ensureOwnerSync(){
+    if(READONLY) return;                 // 뷰어는 enterViewer가 담당
+    if(!firebaseDB()) return;
+    var t = activeTrip(); if(!t) return;
+    var rm = roomForTrip(t.id);
+    var roomId = rm ? rm.roomId : null;
+    if(roomId===ownerSubRoom) return;    // 이미 그 방 구독 중
+    if(ownerUnsub){ try{ ownerUnsub(); }catch(e){} ownerUnsub=null; ownerSubRoom=null; }
+    if(!roomId) return;
+    var dref = roomDoc(roomId); if(!dref) return;
+    ownerSubRoom = roomId;
+    ownerUnsub = dref.onSnapshot(function(snap){
+      if(!snap.exists) return;
+      var data = snap.data() || {};
+      if(!data.trip) return;
+      if(data.updatedBy===MYCID){ lastSeenAt = Math.max(lastSeenAt, data.updatedAt||0); return; }  // 내가 올린 건 무시
+      if((data.updatedAt||0) <= lastSeenAt) return;     // 이미 가진 것과 같거나 더 오래됨
+      if(overlay && overlay.classList.contains("open")){ pendingRemote = {roomId:roomId, trip:data.trip, at:data.updatedAt||0}; return; }  // 편집 중이면 보류
+      lastSeenAt = data.updatedAt||0;
+      applyRemoteTrip(roomId, data.trip);
+    }, function(){});
   }
 
   function showViewerBanner(text){
@@ -1934,7 +2040,7 @@
   }
 
   /* ================= 전역 이벤트 ================= */
-  document.getElementById("tripSelect").onchange = function(){ state.activeId = this.value; save(); render(); };
+  document.getElementById("tripSelect").onchange = function(){ state.activeId = this.value; save(); render(); ensureOwnerSync(); };
   document.getElementById("newTripBtn").onclick = function(){ openTripModal(null); };
   document.getElementById("editBudgetBtn").onclick = function(){ openTripModal(state.activeId); };
   document.getElementById("addResBtn").onclick = function(){ expandSection("res"); openResModal(null); };
@@ -1954,6 +2060,7 @@
     render();
   }
   checkShareHash();
+  ensureOwnerSync();   // 내 기기끼리 실시간 동기화 시작(공유 중인 여행이면)
 })();
 </script>
 
