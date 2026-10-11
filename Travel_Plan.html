@@ -267,6 +267,7 @@
   .tl-amt{font-size:11px;font-weight:600;color:var(--accent-ink);background:var(--accent-soft);border-radius:999px;padding:1px 8px;}
   .tl-note{font-size:12px;color:var(--ink-soft);margin-top:2px;white-space:pre-wrap;}
   .tl-hours{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+  .tl-hours .ico-clock{vertical-align:-2px;margin-right:4px;opacity:.9;}
   .tl-pay{font-size:10px;color:var(--ink-faint);border:1px solid var(--line);border-radius:999px;padding:1px 7px;}
   .tl-closed{font-size:10px;font-weight:600;padding:1px 8px;border-radius:999px;color:var(--bad);border:1px solid var(--bad);background:var(--bad-soft);}
   .wd-pick{display:flex;gap:6px;flex-wrap:wrap;}
@@ -1070,7 +1071,7 @@
         var closedToday = (it.closed && it.closed.indexOf(activeWd)!==-1) ? '<span class="tl-closed">오늘 휴무</span>' : '';
         // 영업시간 / 휴무 요일 안내 줄
         var metaBits = [];
-        if(it.hours) metaBits.push('🕒 '+esc(it.hours));
+        if(it.hours) metaBits.push('<svg class="ico-clock" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5V12l3 1.8"></path></svg>'+esc(it.hours));
         if(it.closed && it.closed.length) metaBits.push('휴무 '+it.closed.slice().sort().map(function(x){return WEEK[x];}).join('·'));
         var hoursLine = metaBits.length ? '<div class="tl-hours">'+metaBits.join('  ·  ')+'</div>' : '';
         html += '<div class="tl-item">'+
@@ -1279,6 +1280,7 @@
     // 연결된 일정과 메모 공유: 이 지출의 메모가 비어 있으면 연결된 일정의 메모를 보여줌
     var resLinkedItin = isNew ? null : itinItemsForRes(t, r.id)[0];
     var resInitMemo = r.memo || (resLinkedItin ? resLinkedItin.note : "");
+    var resInitLink = r.link || (resLinkedItin ? resLinkedItin.link : "");
 
     modalEl.innerHTML =
       '<div class="modal-head"><h3>'+(isNew?"예약·지출 추가":"예약·지출 수정")+'</h3><button class="icon-btn x" id="mX">✕</button></div>'+
@@ -1290,7 +1292,7 @@
         '</div>'+
         amountBlockHtml("금액", r.krw, r.jpy)+
         '<div class="field"><label>결제일 (선택)</label><input id="f-date" type="date" value="'+esc(r.date)+'"></div>'+
-        '<div class="field"><label>링크 (선택)</label><input id="f-link" value="'+esc(r.link)+'" placeholder="예약 확인 페이지 URL"></div>'+
+        '<div class="field"><label>링크 (선택) — 연결된 일정과 공유돼요</label><input id="f-link" value="'+esc(resInitLink)+'" placeholder="예약 확인 페이지 URL"></div>'+
         '<div class="field"><label>메모 (선택) — 연결된 일정과 공유돼요</label><textarea id="f-memo" placeholder="예약번호, 체크인 시간 등">'+esc(resInitMemo)+'</textarea></div>'+
       '</div>'+
       '<div class="modal-foot">'+
@@ -1322,8 +1324,8 @@
       r.link = document.getElementById("f-link").value.trim();
       r.memo = document.getElementById("f-memo").value.trim();
       if(isNew) t.reservations.push(r);
-      // 연결된 일정 항목들의 메모도 같은 값으로 맞춤
-      itinItemsForRes(t, r.id).forEach(function(it){ it.note = r.memo; });
+      // 연결된 일정 항목들의 메모·링크도 같은 값으로 맞춤
+      itinItemsForRes(t, r.id).forEach(function(it){ it.note = r.memo; it.link = r.link; });
       save(); render(); closeModal(); toast(isNew?"추가했어요":"수정했어요");
     };
     setTimeout(function(){ document.getElementById("f-title").focus(); }, 30);
@@ -1395,7 +1397,7 @@
         '<div class="field"><label>카테고리 (선택)</label><select id="f-cat">'+catOpts+'</select></div>'+
         '<div class="field"><label>예약·지출 연결 (선택)</label><select id="f-reslink">'+resOpts+'</select><span class="hint" id="reslinkHint"></span></div>'+
         '<div id="amtWrap">'+amountBlockHtml("금액 (선택)", res?res.krw:0, res?res.jpy:0)+'</div>'+
-        '<div class="field"><label>링크 (선택)</label><input id="f-link" value="'+esc(it.link||"")+'" placeholder="지도, 예약 페이지 등 URL"></div>'+
+        '<div class="field"><label>링크 (선택) — 연결된 예약·지출과 공유돼요</label><input id="f-link" value="'+esc((res && res.link) ? res.link : (it.link||""))+'" placeholder="지도, 예약 페이지 등 URL"></div>'+
         '<div class="field"><label>영업시간 (선택)</label><input id="f-hours" value="'+esc(it.hours||"")+'" placeholder="예: 11:00 ~ 21:00"></div>'+
         '<div class="field"><label>휴무 요일 (선택) — 고른 요일의 일정에 \'오늘 휴무\'가 표시돼요</label>'+closedPickerHtml(it.closed)+'</div>'+
         '<div class="field"><label>장소·메모 (선택) — 연결된 예약·지출과 공유돼요</label><textarea id="f-note" placeholder="위치, 예약 여부, 준비물 등">'+esc((res && res.memo) ? res.memo : (it.note||""))+'</textarea></div>'+
@@ -1422,9 +1424,11 @@
         aw.style.display = "none";
         var rr = findRes(t, sel);
         hint.textContent = rr ? ("이 일정은 ‘"+(rr.title||"")+"’ 지출"+(rr.date?(" (결제 "+labelDate(rr.date)+")"):"")+"에 연결돼요. 금액은 그 항목에서 관리해요.") : "";
-        // 메모 공유: 일정 메모칸이 비어 있으면 연결 대상의 메모를 채워줌
+        // 메모·링크 공유: 일정 칸이 비어 있으면 연결 대상의 값을 채워줌
         var noteEl = document.getElementById("f-note");
         if(noteEl && !noteEl.value && rr && rr.memo){ noteEl.value = rr.memo; }
+        var linkEl = document.getElementById("f-link");
+        if(linkEl && !linkEl.value && rr && rr.link){ linkEl.value = rr.link; }
       } else {
         aw.style.display = "";
         hint.textContent = "금액을 넣으면 ‘이 일정 날짜’로 예약·지출에 새로 생겨요. 결제일이 다르면, 예약·지출에 먼저 만든 뒤 위에서 연결하세요.";
@@ -1502,6 +1506,8 @@
       if(finalRes){
         if(it.note){ finalRes.memo = it.note; }
         else if(finalRes.memo){ it.note = finalRes.memo; }
+        if(it.link){ finalRes.link = it.link; }
+        else if(finalRes.link){ it.link = finalRes.link; }
       }
 
       state.ui.activeDay[t.id] = newDay;
